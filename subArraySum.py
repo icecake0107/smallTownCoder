@@ -14,21 +14,29 @@ class Solution:
         startIndex = 0
         cur_sum = arr[0]
         if cur_sum == s:
-            return (startIndex, startIndex)
+            return (startIndex + 1, startIndex + 1)
 
         for i in range(1, n):
             cur_sum += arr[i]
-            print(f"i: {i} {arr[i]}, cur_sum: {cur_sum}, {arr[i]}")
-            while cur_sum > s and startIndex < i - 1:
+            while cur_sum > s and startIndex < i:
                 cur_sum -= arr[startIndex]
                 startIndex += 1
+                if cur_sum == s:
+                    return(startIndex + 1, i + 1)
 
-            # if cur_sum < s:
-            #     cur_sum += arr[i]
             if cur_sum == s:
-                return(startIndex, i)
+                return(startIndex + 1, i + 1)
 
         return {-1}
+
+# A = "10 20 1000 90 80"
+# A = [int(i) for i in A]
+# A = [10, 20, 1000, 90, 80]
+# n = 5
+# s = 1000
+# ob = Solution()
+# ans = ob.subArraySum(A, n, s)
+# print(ans)
 
 
 class TestSubArray(unittest.TestCase):
@@ -65,6 +73,20 @@ class TestSubArray(unittest.TestCase):
         ob = Solution()
         ans = ob.subArraySum(A, 10, 14)
         self.assertEqual(ans, (1, 4))
+
+    def test_5(self):
+        A = [10, 20, 1000, 90, 80]
+
+        ob = Solution()
+        ans = ob.subArraySum(A, 5, 1000)
+        self.assertEqual(ans, (2, 2))
+
+    def test_6(self):
+        A = [1, 2, 3, 4]
+
+        ob = Solution()
+        ans = ob.subArraySum(A, 4, 0)
+        self.assertEqual(ans, {-1})
 
 
 if __name__ == "__main__":
