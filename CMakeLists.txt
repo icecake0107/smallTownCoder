@@ -7,4 +7,4 @@ set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_DEBUG")
 include_directories(.)
 include_directories(p3016)
 
-add_executable(smallTownCoder p3016/main.cpp)
+add_executable(smallTownCoder p3016/main.cpp p3016/matrix.h)
