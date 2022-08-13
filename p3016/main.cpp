@@ -112,27 +112,28 @@ int* solution(const array2D& M, const int N){
                                           [&x](std::array<int, 2> z) { return z[0] == x[0]; });
             int col_zeros = std::count_if(zeros.begin(), zeros.end(),
                                           [&x](std::array<int, 2> z) { return z[1] == x[1]; });
-            if (row_zeros > max_row_zeros) {
+            if (row_zeros >= max_row_zeros) {
                 max_row_zeros = row_zeros;
                 max_row_index = x[0];
             }
-            if (col_zeros > max_col_zeros) {
+            if (col_zeros >= max_col_zeros) {
                 max_col_zeros = col_zeros;
                 max_col_index = x[1];
             }
         }
-        if (max_row_zeros >= max_col_zeros) {
+        if ((max_row_zeros >max_col_zeros) || ((max_row_zeros == max_col_zeros) && (max_row_index > max_col_index))){
             row_to_remove.push_back(max_row_index);
             for (auto z: zeros) {
                 auto find = std::find(zeroDeleted.begin(), zeroDeleted.end(), z);
-                if (z[0] == max_row_index && find->empty())
+                if (z[0] == max_row_index && find==zeroDeleted.end())
                     zeroDeleted.push_back(z);
             }
-        } else {
+        }
+        else {
             col_to_remove.push_back(max_col_index);
             for (auto z: zeros) {
                 auto find = std::find(zeroDeleted.begin(), zeroDeleted.end(), z);
-                if (z[1] == max_col_index && find!=zeroDeleted.end())
+                if (z[1] == max_col_index && find==zeroDeleted.end())
                     zeroDeleted.push_back(z);
             }
         }
