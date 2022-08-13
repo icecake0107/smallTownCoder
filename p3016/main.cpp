@@ -82,8 +82,8 @@ void printResult(const int* result){
 int* solution(const array2D& M, const int N){
     strokes strokes_ {};
     int* ret = new int[N*2];
-    int* rowIds = new int[N*2];
-    int* co= new int[N*2];
+//    int* rowIds = new int[N*2];
+//    int* co= new int[N*2];
     ret[0] = N;
     // Collect all zeros' index.
     std::vector<std::array<int, 2>> zeros {};
@@ -91,65 +91,40 @@ int* solution(const array2D& M, const int N){
     std::vector<std::array<int, 2>> removed_cols {};
     for (int i=0; i<N; i++){
         for(int j=0; j<N;j++)
-            if(M[i][j]==0)
-                zeros.push_back(std::array<int, 2> {i,j});
+            if(M[i][j]==0){
+                // Count how many zeros in the same row and column
+                bool notRemovedYet = std::count_if(removed_rows.begin(), removed_rows.end(), [&i](std::array<int, 2> r) { return r[0] == i; })==0 &&
+                                     std::count_if(removed_cols.begin(), removed_cols.end(), [&j](std::array<int, 2> c) { return c[0] == j; })==0;
+                if (!notRemovedYet) continue;
+
+                int row_count = 0;
+                int col_count = 0;
+                for(int k=j;k<N;k++){
+                    notRemovedYet = std::count_if(removed_rows.begin(), removed_rows.end(), [&i](std::array<int, 2> r) { return r[0] == i; })==0 &&
+                                    std::count_if(removed_cols.begin(), removed_cols.end(), [&k](std::array<int, 2> c) { return c[0] == k; })==0;
+                    if(M[i][k]==0 && notRemovedYet)
+                        row_count++;
+                }
+                for(int k=i;k<N;k++){
+                    notRemovedYet = std::count_if(removed_rows.begin(), removed_rows.end(), [&k](std::array<int, 2> r) { return r[0] == k; })==0 &&
+                                         std::count_if(removed_cols.begin(), removed_cols.end(), [&j](std::array<int, 2> c) { return c[0] == j; })==0;
+                    if(M[k][j]==0 && notRemovedYet)
+                        col_count++;
+                }
+
+                if (row_count && row_count > col_count)
+                    removed_rows.push_back(std::array<int, 2>{i, row_count});
+                else if (col_count)
+                    removed_cols.push_back(std::array<int, 2>{j, col_count});
+
+            }
+//                zeros.push_back(std::array<int, 2> {i,j});
     }
-
-    int removed_zeros = 0;
-    int allZeros = zeros.size();
-    while (zeros.size()!=0) {
-        int max_row_zeros[2] {-1,-1,};
-        int max_col_zeros[2] {-1,-1};
-        for (int i = 0; i < N; i++) {
-            if(zeros.size()==1){
-                max_row_zeros[0] = zeros[0][0];
-                max_row_zeros[1] = 1;
-                break;
-            }
-
-            int row_count = std::count_if(zeros.begin(), zeros.end(), [&i](std::array<int, 2> c) { return c[0] == i; });
-            int col_count = std::count_if(zeros.begin(), zeros.end(), [&i](std::array<int, 2> t) { return t[1] == i; });
-
-            if(zeros.size()>1 && row_count > max_row_zeros[1]) {
-                max_row_zeros[0] = i;
-                max_row_zeros[1] = row_count;
-            }
-            if(col_count > max_col_zeros[1]) {
-                max_col_zeros[0] = i;
-                max_col_zeros[1] = col_count;
-            }
-        }
-        if(max_row_zeros[1] >0) {
-            zeros.erase(std::remove_if(zeros.begin(),
-                                       zeros.end(),
-                                       [&max_row_zeros](std::array<int, 2> x) {
-                                           return x[0] == max_row_zeros[0];
-                                       }),
-                        zeros.end());
-            removed_rows.push_back(std::array<int, 2>{max_row_zeros[0], max_row_zeros[1]});
-        }
-        if(max_col_zeros[1]>0){
-
-            zeros.erase(std::remove_if(zeros.begin(),
-                                       zeros.end(),
-                                       [&max_col_zeros](std::array<int, 2> x) {
-                                           return x[1] == max_col_zeros[0];
-                                       }),
-                        zeros.end());
-            removed_cols.push_back(std::array<int,2> {max_col_zeros[0], max_col_zeros[1]});
-        }
-
-//        removed_zeros += max_row_zeros[1] + max_col_zeros[1];
-    }
-
-
-    // check if any stroke has all overlapped zeros
-
 
     int total = removed_rows.size() + removed_cols.size();
     ret[0]=total;
-    for(int i=1;i<removed_rows.size(); i++)
-        ret[i] = removed_rows[i][0];
+    for(int i=1;i<=removed_rows.size(); i++)
+        ret[i] = removed_rows[i-1][0];
     ret[removed_rows.size()+1] = -1;
 
     for(int i=0;i< removed_cols.size(); i++)
@@ -236,6 +211,7 @@ public:
                         m = MM[j][i];
                     };
                 }
+                if (m==0){ continue;}
                 for(int j=0;j<N;j++){
                     MM[j][i] -= m;
                 }

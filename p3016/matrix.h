@@ -8,10 +8,10 @@
 namespace MM{
 struct Matrix{
     int size {};
-    const int rowCount() const{
+    [[nodiscard]] int rowCount() const{
         return this->size/2;
     }
-    const int colCount(){
+    [[nodiscard]] int colCount() const{
         return rowCount();
     }
 
