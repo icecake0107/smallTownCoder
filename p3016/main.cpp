@@ -10,8 +10,10 @@
 #import <array>
 #import <cmath>
 
-using array2D = int[50][50];
+using array1D = std::array<int, 50>;
+using array2D = std::array<array1D, 50>;
 using strokes = std::vector<std::array<int, 2>>; // [x,y, 0|1] 0=row, 1=col
+using loc = std::array<int, 2>; // [x,y, 0|1] 0=row, 1=col
 
 //const int test_data[4] = {3,5,10,1}; // 4
 //const int test_data[9] = {2, 1, 2, 9, 8, 1, 1, 1, 1}; // 3
@@ -22,17 +24,11 @@ const int test_data[36] = {93,59,18,72,33,73,81,54,26,5,85,13,67,49,55,38,91,35,
 //const int test_data[49] = {28,30,81,56,52,97,17,17,53,98,65,74,7,16,80,58,13,5,25,42,92,53,74,28,49,92,7,15,66,82,20,85,53,51,5,45,93,48,81,30,89,88,57,7,22,22,94,33,7};
 
 
-int min(const int array[], int low=0){
+int min(const array1D array, int low=0){
     int _min = INT_MAX;
-
-    while (*array > 0){
-        if (*array == low)
-            return *array;
-        if (*array<_min)
-        {
-            _min=*array;
-        }
-        ++array;
+    for (auto i: array){
+        if (i<_min && i>0)
+            _min = i;
     }
     return _min;
 }
@@ -48,13 +44,13 @@ void initMatrix(const int Arr[], int N, array2D& M){
 }
 
 void printM(const array2D& M) {
-    for (auto r: M){
-        if (*r < 0){
+    for (auto row: M){
+        if(row[0]<0)
             break;
-        }
-        while(*r >= 0){
-            std::cout<<*r<<"\t";
-            ++r;
+        for (auto i: row){
+            if (i < 0)
+                break;
+            std::cout<<i<<"\t";
         }
         std::cout<<" x "<<std::endl;
     }
@@ -82,60 +78,81 @@ void printResult(const int* result){
 int* solution(const array2D& M, const int N){
     strokes strokes_ {};
     int* ret = new int[N*2];
-//    int* rowIds = new int[N*2];
-//    int* co= new int[N*2];
+
     ret[0] = N;
     // Collect all zeros' index.
     std::vector<std::array<int, 2>> zeros {};
+    std::vector<std::array<int, 2>> zeroDeleted {};
     std::vector<std::array<int, 2>> removed_rows {};
     std::vector<std::array<int, 2>> removed_cols {};
+
+    std::vector<int> row_to_remove {};
+    std::vector<int> col_to_remove {};
+
     for (int i=0; i<N; i++){
         for(int j=0; j<N;j++)
             if(M[i][j]==0){
-                // Count how many zeros in the same row and column
-                bool notRemovedYet = std::count_if(removed_rows.begin(), removed_rows.end(), [&i](std::array<int, 2> r) { return r[0] == i; })==0 &&
-                                     std::count_if(removed_cols.begin(), removed_cols.end(), [&j](std::array<int, 2> c) { return c[0] == j; })==0;
-                if (!notRemovedYet) continue;
-
-                int row_count = 0;
-                int col_count = 0;
-                for(int k=j;k<N;k++){
-                    notRemovedYet = std::count_if(removed_rows.begin(), removed_rows.end(), [&i](std::array<int, 2> r) { return r[0] == i; })==0 &&
-                                    std::count_if(removed_cols.begin(), removed_cols.end(), [&k](std::array<int, 2> c) { return c[0] == k; })==0;
-                    if(M[i][k]==0 && notRemovedYet)
-                        row_count++;
-                }
-                for(int k=i;k<N;k++){
-                    notRemovedYet = std::count_if(removed_rows.begin(), removed_rows.end(), [&k](std::array<int, 2> r) { return r[0] == k; })==0 &&
-                                         std::count_if(removed_cols.begin(), removed_cols.end(), [&j](std::array<int, 2> c) { return c[0] == j; })==0;
-                    if(M[k][j]==0 && notRemovedYet)
-                        col_count++;
-                }
-
-                if (row_count && row_count > col_count)
-                    removed_rows.push_back(std::array<int, 2>{i, row_count});
-                else if (col_count)
-                    removed_cols.push_back(std::array<int, 2>{j, col_count});
-
+                zeros.push_back(loc{i,j});
             }
-//                zeros.push_back(std::array<int, 2> {i,j});
     }
 
-    int total = removed_rows.size() + removed_cols.size();
-    ret[0]=total;
-    for(int i=1;i<=removed_rows.size(); i++)
-        ret[i] = removed_rows[i-1][0];
-    ret[removed_rows.size()+1] = -1;
+    while (zeroDeleted.size() < zeros.size()) {
+        int max_row_zeros = 0;
+        int max_row_index = 0;
+        int max_col_zeros = 0;
+        int max_col_index = 0;
 
-    for(int i=0;i< removed_cols.size(); i++)
-        ret[i+removed_rows.size()+2] = removed_cols[i][0];
-    ret[total +2] = -1;
-    // [N/-1, row1, row2, row3...,rowN, -1, col1, col2, col3...colN, -1]
-    return ret;
+
+        for (auto x: zeros) {
+            if (std::count(row_to_remove.begin(), row_to_remove.end(), x[0]) ||
+                std::count(col_to_remove.begin(), col_to_remove.end(), x[1]))
+                continue;
+
+            int row_zeros = std::count_if(zeros.begin(), zeros.end(),
+                                          [&x](std::array<int, 2> z) { return z[0] == x[0]; });
+            int col_zeros = std::count_if(zeros.begin(), zeros.end(),
+                                          [&x](std::array<int, 2> z) { return z[1] == x[1]; });
+            if (row_zeros > max_row_zeros) {
+                max_row_zeros = row_zeros;
+                max_row_index = x[0];
+            }
+            if (col_zeros > max_col_zeros) {
+                max_col_zeros = col_zeros;
+                max_col_index = x[1];
+            }
+        }
+        if (max_row_zeros >= max_col_zeros) {
+            row_to_remove.push_back(max_row_index);
+            for (auto z: zeros) {
+                auto find = std::find(zeroDeleted.begin(), zeroDeleted.end(), z);
+                if (z[0] == max_row_index && find->empty())
+                    zeroDeleted.push_back(z);
+            }
+        } else {
+            col_to_remove.push_back(max_col_index);
+            for (auto z: zeros) {
+                auto find = std::find(zeroDeleted.begin(), zeroDeleted.end(), z);
+                if (z[1] == max_col_index && find!=zeroDeleted.end())
+                    zeroDeleted.push_back(z);
+            }
+        }
+    }
+
+        auto total = row_to_remove.size() + col_to_remove.size();
+        ret[0] = total;
+        for (int i = 1; i <= row_to_remove.size(); i++)
+            ret[i] = row_to_remove[i - 1];
+        ret[row_to_remove.size() + 1] = -1;
+
+        for (int i = 0; i < col_to_remove.size(); i++)
+            ret[i + row_to_remove.size() + 2] = col_to_remove[i];
+        ret[total + 2] = -1;
+        // [N/-1, row1, row2, row3...,rowN, -1, col1, col2, col3...colN, -1]
+        return ret;
 }
 
 
-int calculate(const array2D& M,array2D& MM, const int N, int& total){
+int calculate(const array2D& M, array2D& MM, const int N, int& total){
 
 //    printM(MM);
     bool find = false;
@@ -181,20 +198,26 @@ public:
 
         // Step 0. initialize the matrix
         array2D M {0};
-        array2D MM {};
+        array2D MM {0};
         initMatrix(Arr, N, M);
         initMatrix(Arr, N, MM);
         std::cout<<"=== Original ==="<<std::endl;
         printM(M);
 
         // Step 1. Row operation, find the lowest value in each row and subtract it from each item in the same row.
-        for (auto row: MM){
-            int min_ = min(row);
-            while(*row>0) {
-                *row -= min_;
-                row++;
-            }
+//        for (auto row: MM){
+//            int min_ = min(row);
+//            for(int i=0;i<N;i++)
+//                row[i] -=min_;
+//        }
+        for(int i=0; i<N; i++){
+            int min_ = min(MM[i]);
+            for (int j=0; j<N;j++)
+                MM[i][j] -= min_;
         }
+
+
+
         std::cout<<"=== Step 1. ==="<<std::endl;
         printM(MM);
 
