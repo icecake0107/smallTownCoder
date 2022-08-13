@@ -8,6 +8,7 @@
 #import <iostream>
 #import <vector>
 #import <array>
+#import <map>
 #import <cmath>
 
 using array1D = std::array<int, 50>;
@@ -75,81 +76,82 @@ void printResult(const int* result){
     std::cout<<"=== Total ("<<result[0]<< ") ==="<<std::endl;
 }
 
-int* solution(const array2D& M, const int N){
-    strokes strokes_ {};
+auto solution(const array2D& M, const int N) -> int*{
     int* ret = new int[N*2];
-
     ret[0] = N;
-    // Collect all zeros' index.
-    std::vector<std::array<int, 2>> zeros {};
-    std::vector<std::array<int, 2>> zeroDeleted {};
-    std::vector<std::array<int, 2>> removed_rows {};
-    std::vector<std::array<int, 2>> removed_cols {};
-
+    std::vector<loc> zeros {};
+    std::map<int, int> rows {};
+    std::map<int, int> cols {};
     std::vector<int> row_to_remove {};
     std::vector<int> col_to_remove {};
+    int totalZeros = 0;
+    int totalRemoved = 0;
 
     for (int i=0; i<N; i++){
         for(int j=0; j<N;j++)
             if(M[i][j]==0){
-                zeros.push_back(loc{i,j});
+                totalZeros += 1;
+                rows[i] += 1;
+                cols[j] += 1;
+                zeros.push_back(loc{i, j});
             }
     }
+    bool lastRemoved = true;  //row =0, col = 1;
+    while (totalRemoved<totalZeros){
+        auto r_rit = rows.begin();
+        auto c_rit = cols.begin();
+        std::array<int, 2> max_row = {};
+        std::array<int, 2> max_col = {};
 
-    while (zeroDeleted.size() < zeros.size()) {
-        int max_row_zeros = 0;
-        int max_row_index = 0;
-        int max_col_zeros = 0;
-        int max_col_index = 0;
-
-
-        for (auto x: zeros) {
-            if (std::count(row_to_remove.begin(), row_to_remove.end(), x[0]) ||
-                std::count(col_to_remove.begin(), col_to_remove.end(), x[1]))
-                continue;
-
-            int row_zeros = std::count_if(zeros.begin(), zeros.end(),
-                                          [&x](std::array<int, 2> z) { return z[0] == x[0]; });
-            int col_zeros = std::count_if(zeros.begin(), zeros.end(),
-                                          [&x](std::array<int, 2> z) { return z[1] == x[1]; });
-            if (row_zeros >= max_row_zeros) {
-                max_row_zeros = row_zeros;
-                max_row_index = x[0];
+        while(r_rit!=rows.end()){
+            if(r_rit->second >= max_row[1]){
+                max_row[0] = r_rit->first;
+                max_row[1] = r_rit->second;
             }
-            if (col_zeros >= max_col_zeros) {
-                max_col_zeros = col_zeros;
-                max_col_index = x[1];
-            }
+            ++r_rit;
         }
-        if ((max_row_zeros >max_col_zeros) || ((max_row_zeros == max_col_zeros) && (max_row_index > max_col_index))){
-            row_to_remove.push_back(max_row_index);
-            for (auto z: zeros) {
-                auto find = std::find(zeroDeleted.begin(), zeroDeleted.end(), z);
-                if (z[0] == max_row_index && find==zeroDeleted.end())
-                    zeroDeleted.push_back(z);
+        while(c_rit!=cols.end()){
+            if(c_rit->second >= max_col[1]){
+                max_col[0] = c_rit->first;
+                max_col[1] = c_rit->second;
             }
+            ++c_rit;
         }
-        else {
-            col_to_remove.push_back(max_col_index);
+
+        if ( (max_row[1]> max_col[1]) ||  ((max_row[1]==max_col[1]) && lastRemoved)){
+            lastRemoved = false;
+            row_to_remove.push_back(max_row[0]);
+            totalRemoved += max_row[1];
             for (auto z: zeros) {
-                auto find = std::find(zeroDeleted.begin(), zeroDeleted.end(), z);
-                if (z[1] == max_col_index && find==zeroDeleted.end())
-                    zeroDeleted.push_back(z);
+                if (z[0] == max_row[0] && cols[z[1]]>0 ) {
+                    cols[z[1]] -= 1;
+                }
             }
+            rows[max_row[0]] = 0;
+        }else{
+            lastRemoved = true;
+            col_to_remove.push_back(max_col[0]);
+            totalRemoved += max_col[1];
+            for (auto z: zeros) {
+                if (z[1] == max_col[0] && rows[z[0]] > 0) {
+                    rows[z[0]] -= 1;
+                }
+            }
+            cols[max_col[0]] = 0;
         }
     }
 
-        auto total = row_to_remove.size() + col_to_remove.size();
-        ret[0] = total;
-        for (int i = 1; i <= row_to_remove.size(); i++)
-            ret[i] = row_to_remove[i - 1];
-        ret[row_to_remove.size() + 1] = -1;
+    auto total = row_to_remove.size() + col_to_remove.size();
+    ret[0] = total;
+    for (int i = 1; i <= row_to_remove.size(); i++)
+        ret[i] = row_to_remove[i - 1];
+    ret[row_to_remove.size() + 1] = -1;
 
-        for (int i = 0; i < col_to_remove.size(); i++)
-            ret[i + row_to_remove.size() + 2] = col_to_remove[i];
-        ret[total + 2] = -1;
-        // [N/-1, row1, row2, row3...,rowN, -1, col1, col2, col3...colN, -1]
-        return ret;
+    for (int i = 0; i < col_to_remove.size(); i++)
+        ret[i + row_to_remove.size() + 2] = col_to_remove[i];
+    ret[total + 2] = -1;
+    // [N/-1, row1, row2, row3...,rowN, -1, col1, col2, col3...colN, -1]
+    return ret;
 }
 
 
