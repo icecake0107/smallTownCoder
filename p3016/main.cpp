@@ -11,8 +11,8 @@
 #import <map>
 #import <cmath>
 
-using array1D = std::array<int, 50>;
-using array2D = std::array<array1D, 50>;
+using array1D = std::array<int, 40>;
+using array2D = std::array<array1D, 40>;
 using strokes = std::vector<std::array<int, 2>>; // [x,y, 0|1] 0=row, 1=col
 using loc = std::array<int, 2>; // [x,y, 0|1] 0=row, 1=col
 
