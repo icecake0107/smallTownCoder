@@ -13,7 +13,6 @@
 
 using array1D = std::array<int, 40>;
 using array2D = std::array<array1D, 40>;
-using strokes = std::vector<std::array<int, 2>>; // [x,y, 0|1] 0=row, 1=col
 using loc = std::array<int, 2>; // [x,y, 0|1] 0=row, 1=col
 
 //const int test_data[4] = {3,5,10,1}; // 4
@@ -21,7 +20,8 @@ using loc = std::array<int, 2>; // [x,y, 0|1] 0=row, 1=col
 //const int test_data[9] = {108, 125, 150, 150, 135, 175, 122, 148, 250}; // 407
 //const int test_data[36] = {9,3,57,53,1,95,86,64,49,64,93,80,74,60,27,89,44,66,44,56,11,42,43,28,99,75,20,9,99,81,70,34,56,95,18,30}; //155
 //127
-const int test_data[36] = {93,59,18,72,33,73,81,54,26,5,85,13,67,49,55,38,91,35,29,5,57,89,40,41,56,50,21,87,69,15,28,79,31,52,17,11 };
+//const int test_data[36] = {93,59,18,72,33,73,81,54,26,5,85,13,67,49,55,38,91,35,29,5,57,89,40,41,56,50,21,87,69,15,28,79,31,52,17,11 };
+//103
 //const int test_data[49] = {28,30,81,56,52,97,17,17,53,98,65,74,7,16,80,58,13,5,25,42,92,53,74,28,49,92,7,15,66,82,20,85,53,51,5,45,93,48,81,30,89,88,57,7,22,22,94,33,7};
 
 
@@ -77,7 +77,7 @@ void printResult(const int* result){
 }
 
 auto solution(const array2D& M, const int N) -> int*{
-    int* ret = new int[N*2];
+    int* ret = new int[N*2+1];
     ret[0] = N;
     std::vector<loc> zeros {};
     std::map<int, int> rows {};
@@ -154,46 +154,39 @@ auto solution(const array2D& M, const int N) -> int*{
     return ret;
 }
 
+int calculate(const array2D& M, array2D& MM, const int N){
+    std::vector<int> occupied;
+    int total = 0;
+    int count = 1;
+    int done = 0;
+    while(done<N) {
+        auto iterM = M.begin();
+        for (auto row: MM) {
+            if (row[0] == -1) break;
 
-int calculate(const array2D& M, array2D& MM, const int N, int& total){
-
-//    printM(MM);
-    bool find = false;
-    for(int i =0; i<N;i++){
-        if (MM[0][i] != -1) {
-            find = true;
-            break;
-        }
-    }
-    if(!find)
-        return total;
-
-    for (int i=0; i<N; i++){
-        int value = 0;
-        int column = 0;
-        int zero_count = 0;
-        for(int j=0;j<N;j++){
-            if(MM[0][j]==-1){
-                continue;
+            auto zeros = std::count_if(row.begin(), row.begin() + N, [](int x) { return x == 0; });
+            if (zeros == count) {
+                int colIndex = -1;
+                int value = 9999;
+                for (int i = 0; i < N; i++) {
+                    if ((row[i] == 0) && !std::count(occupied.begin(), occupied.end(), i)) {
+                        if ((*iterM)[i]<value){
+                            value = (*iterM)[i];
+                            colIndex = i;
+                        }
+                    }
+                }
+                occupied.push_back(colIndex);
+                done++;
+                total += value;
             }
-            if(MM[i][j] == 0) {
-                if(zero_count >0) {zero_count=0;break;}
-                zero_count += 1;
-                value = M[i][j];
-                column = j;
-            }
+            ++iterM;
         }
-        if(zero_count==1){
-            total += value;
-            MM[0][column] = -1;
-        }
-
+        ++count;
     }
-    calculate(M, MM, N, total);
 
+    return total;
 }
-
-
 
 class Solution{
 public:
@@ -304,8 +297,7 @@ public:
 
         }
         if (result[0]>=N){
-            int total = 0;
-            calculate(M, MM, N, total);
+            int total = calculate(M, MM, N);
             std::cout<<"Has solution: "<<total<<std::endl;
             return total;
         }
