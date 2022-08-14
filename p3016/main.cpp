@@ -22,8 +22,8 @@ using loc = std::array<int, 2>; // [x,y, 0|1] 0=row, 1=col
 //127
 //const int test_data[36] = {93,59,18,72,33,73,81,54,26,5,85,13,67,49,55,38,91,35,29,5,57,89,40,41,56,50,21,87,69,15,28,79,31,52,17,11 };
 //103
-//const int test_data[49] = {28,30,81,56,52,97,17,17,53,98,65,74,7,16,80,58,13,5,25,42,92,53,74,28,49,92,7,15,66,82,20,85,53,51,5,45,93,48,81,30,89,88,57,7,22,22,94,33,7};
-
+const int test_data[49] = {28,30,81,56,52,97,17,17,53,98,65,74,7,16,80,58,13,5,25,42,92,53,74,28,49,92,7,15,66,82,20,85,53,51,5,45,93,48,81,30,89,88,57,7,22,22,94,33,7};
+//const int test_data[81] = {12,92,4,77,34,71,54,45,49,92,80,90,96,24,64,85,54,42,76,37,5,85,28,80,17,26,66,65,88,60,48,30,96,32,57,3,29,3,63,34,39,93,99,53,77,37,53,49,15,79,13,88,46,60,87,17,74,28,63,67,41,60,76,83,49,26,2,90,9,38,24,75,88,74,71,44,43,30,73,46,18};
 
 int min(const array1D array, int low=0){
     int _min = INT_MAX;
@@ -45,6 +45,16 @@ void initMatrix(const int Arr[], int N, array2D& M){
 }
 
 void printM(const array2D& M) {
+    int _c = 0;
+    for(auto col: M[0]){
+        if(col<0)
+            break;
+        std::cout<<"<" << _c <<">\t";
+        ++_c;
+    }
+    std::cout<<std::endl;
+
+    int _r =0;
     for (auto row: M){
         if(row[0]<0)
             break;
@@ -53,7 +63,8 @@ void printM(const array2D& M) {
                 break;
             std::cout<<i<<"\t";
         }
-        std::cout<<" x "<<std::endl;
+        std::cout << " <" << _r << "> " << std::endl;
+        ++_r;
     }
 }
 
@@ -128,6 +139,7 @@ auto solution(const array2D& M, const int N) -> int*{
                 }
             }
             rows[max_row[0]] = 0;
+            std::cout<<"r: ("<<max_row[0]<<", "<<max_row[1]<<")>> ";
         }else{
             lastRemoved = true;
             col_to_remove.push_back(max_col[0]);
@@ -138,9 +150,10 @@ auto solution(const array2D& M, const int N) -> int*{
                 }
             }
             cols[max_col[0]] = 0;
+            std::cout<<"c: ("<<max_col[0]<<", "<<max_col[1]<<")>> ";
         }
     }
-
+    std::cout<<std::endl;
     auto total = row_to_remove.size() + col_to_remove.size();
     ret[0] = total;
     for (int i = 1; i <= row_to_remove.size(); i++)
@@ -201,11 +214,7 @@ public:
         printM(M);
 
         // Step 1. Row operation, find the lowest value in each row and subtract it from each item in the same row.
-//        for (auto row: MM){
-//            int min_ = min(row);
-//            for(int i=0;i<N;i++)
-//                row[i] -=min_;
-//        }
+
         for(int i=0; i<N; i++){
             int min_ = min(MM[i]);
             for (int j=0; j<N;j++)
